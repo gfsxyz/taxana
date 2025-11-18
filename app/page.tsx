@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
 import { trpc } from '@/lib/trpc/client';
 import { TransactionTable } from '@/components/transaction-table';
 import { Wallet, FileText, Shield, ArrowRight, Calculator, TrendingUp, TrendingDown } from 'lucide-react';
