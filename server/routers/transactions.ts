@@ -2,6 +2,7 @@ import { z } from 'zod/v4';
 import { router, publicProcedure } from '../trpc/trpc';
 import { db, transactions } from '@/lib/db';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { calculateTaxes } from '@/lib/services/tax-calculator';
 
 // Helius API types
 interface HeliusTransaction {
@@ -247,5 +248,36 @@ export const transactionsRouter = router({
         .orderBy(desc(transactions.timestamp));
 
       return result;
+    }),
+
+  // Calculate taxes for transactions
+  calculateTaxes: publicProcedure
+    .input(z.object({
+      walletAddress: z.string().min(32).max(44),
+      year: z.number().min(2020).max(2030),
+    }))
+    .mutation(async ({ input }) => {
+      const { walletAddress, year } = input;
+
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year, 11, 31, 23, 59, 59);
+
+      // Get transactions from database
+      const txs = await db
+        .select()
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.walletAddress, walletAddress),
+            gte(transactions.timestamp, startDate),
+            lte(transactions.timestamp, endDate)
+          )
+        )
+        .orderBy(desc(transactions.timestamp));
+
+      // Calculate taxes
+      const taxSummary = await calculateTaxes(txs);
+
+      return taxSummary;
     }),
 });

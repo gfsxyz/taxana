@@ -9,18 +9,32 @@ import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
 import { trpc } from '@/lib/trpc/client';
 import { TransactionTable } from '@/components/transaction-table';
-import { Wallet, FileText, Shield, ArrowRight, Calculator } from 'lucide-react';
+import { Wallet, FileText, Shield, ArrowRight, Calculator, TrendingUp, TrendingDown } from 'lucide-react';
+import type { TaxSummary } from '@/lib/services/tax-calculator';
+
+// Helper to format IDR
+function formatIDR(amount: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 export default function Home() {
   const { connected, publicKey, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [taxSummary, setTaxSummary] = useState<TaxSummary | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const walletAddress = publicKey?.toBase58() || '';
 
   // tRPC mutations and queries
   const fetchTransactionsMutation = trpc.transactions.fetchTransactions.useMutation();
+  const calculateTaxesMutation = trpc.transactions.calculateTaxes.useMutation();
   const transactionsQuery = trpc.transactions.getTransactions.useQuery(
     { walletAddress, year: selectedYear || 2024 },
     { enabled: connected && !!selectedYear }
@@ -33,11 +47,13 @@ export default function Home() {
   const handleDisconnect = () => {
     disconnect();
     setSelectedYear(null);
+    setTaxSummary(null);
   };
 
   const handleSelectYear = async (year: number) => {
     setSelectedYear(year);
     setIsFetching(true);
+    setTaxSummary(null);
 
     try {
       await fetchTransactionsMutation.mutateAsync({
@@ -50,6 +66,23 @@ export default function Home() {
       console.error('Error fetching transactions:', error);
     } finally {
       setIsFetching(false);
+    }
+  };
+
+  const handleCalculateTaxes = async () => {
+    if (!selectedYear) return;
+
+    setIsCalculating(true);
+    try {
+      const result = await calculateTaxesMutation.mutateAsync({
+        walletAddress,
+        year: selectedYear,
+      });
+      setTaxSummary(result);
+    } catch (error) {
+      console.error('Error calculating taxes:', error);
+    } finally {
+      setIsCalculating(false);
     }
   };
 
@@ -157,12 +190,21 @@ export default function Home() {
             </div>
           </div>
         ) : isFetching || fetchTransactionsMutation.isPending ? (
-          // Loading State
+          // Loading State - Fetching Transactions
           <div className="max-w-xl mx-auto text-center py-16">
             <Spinner className="h-12 w-12 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Mengambil Transaksi...</h2>
             <p className="text-muted-foreground">
               Sedang mengambil riwayat transaksi dari blockchain Solana untuk tahun {selectedYear}
+            </p>
+          </div>
+        ) : isCalculating ? (
+          // Loading State - Calculating Taxes
+          <div className="max-w-xl mx-auto text-center py-16">
+            <Spinner className="h-12 w-12 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Menghitung Pajak...</h2>
+            <p className="text-muted-foreground">
+              Sedang mengambil harga token dan menghitung kewajiban pajak
             </p>
           </div>
         ) : (
@@ -178,42 +220,143 @@ export default function Home() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedYear(null)}
+                  onClick={() => {
+                    setSelectedYear(null);
+                    setTaxSummary(null);
+                  }}
                 >
                   Ganti Tahun
                 </Button>
+                {!taxSummary && transactionsQuery.data && transactionsQuery.data.length > 0 && (
+                  <Button onClick={handleCalculateTaxes}>
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Hitung Pajak
+                  </Button>
+                )}
               </div>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Total Transaksi</CardDescription>
-                  <CardTitle className="text-2xl">
-                    {transactionsQuery.data?.length || 0}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Status</CardDescription>
-                  <CardTitle className="text-2xl">
-                    <Badge variant="secondary">POC - Tanpa Kalkulasi</Badge>
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>DEX Terdeteksi</CardDescription>
-                  <CardTitle className="text-2xl">
-                    {transactionsQuery.data
-                      ? [...new Set(transactionsQuery.data.map(tx => tx.dex))].filter(Boolean).length
-                      : 0}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            </div>
+            {/* Tax Summary Cards */}
+            {taxSummary ? (
+              <>
+                <div className="grid md:grid-cols-4 gap-4 mb-6">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Total Transaksi</CardDescription>
+                      <CardTitle className="text-2xl">
+                        {taxSummary.totalTransactions}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground">
+                        {taxSummary.totalBuys} beli, {taxSummary.totalSells} jual
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Keuntungan/Kerugian</CardDescription>
+                      <CardTitle className={`text-2xl ${taxSummary.netGainLossIdr >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                        {taxSummary.netGainLossIdr >= 0 ? (
+                          <TrendingUp className="inline h-5 w-5 mr-1" />
+                        ) : (
+                          <TrendingDown className="inline h-5 w-5 mr-1" />
+                        )}
+                        {formatIDR(Math.abs(taxSummary.netGainLossIdr))}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground">
+                        FIFO cost basis
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>PPh Final (0.2%)</CardDescription>
+                      <CardTitle className="text-2xl">
+                        {formatIDR(taxSummary.totalPphTax)}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground">
+                        Pajak transaksi jual
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>PPN (0.22%)</CardDescription>
+                      <CardTitle className="text-2xl">
+                        {formatIDR(taxSummary.totalPpnTax)}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground">
+                        Pajak transaksi beli
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Total Tax Card */}
+                <Card className="mb-6 border-primary">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardDescription>Total Kewajiban Pajak</CardDescription>
+                        <CardTitle className="text-3xl">
+                          {formatIDR(taxSummary.totalTax)}
+                        </CardTitle>
+                      </div>
+                      <Button disabled>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Download PDF (Coming Soon)
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Catatan: Perhitungan ini menggunakan harga token saat ini. Untuk akurasi lebih baik,
+                      gunakan harga historis pada saat transaksi dilakukan.
+                    </p>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              /* Summary Cards - Before Calculation */
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Total Transaksi</CardDescription>
+                    <CardTitle className="text-2xl">
+                      {transactionsQuery.data?.length || 0}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Status</CardDescription>
+                    <CardTitle className="text-2xl">
+                      <Badge variant="secondary">Belum Dihitung</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>DEX Terdeteksi</CardDescription>
+                    <CardTitle className="text-2xl">
+                      {transactionsQuery.data
+                        ? [...new Set(transactionsQuery.data.map(tx => tx.dex))].filter(Boolean).length
+                        : 0}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              </div>
+            )}
 
             {/* Transaction Table */}
             <Card>
