@@ -164,15 +164,51 @@ export const transactionsRouter = router({
         throw new Error('HELIUS_API_KEY tidak ditemukan');
       }
 
-      // Fetch transactions from Helius
-      const url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${heliusApiKey}&type=SWAP`;
+      // Fetch ALL transactions from Helius with pagination
+      const heliusTransactions: HeliusTransaction[] = [];
+      let lastSignature: string | undefined;
+      let reachedStartOfYear = false;
+      const maxPages = 50; // Safety limit to prevent infinite loops
+      let pageCount = 0;
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Gagal mengambil transaksi: ${response.statusText}`);
+      while (!reachedStartOfYear && pageCount < maxPages) {
+        pageCount++;
+
+        // Build URL with pagination cursor
+        let url = `https://api.helius.xyz/v0/addresses/${walletAddress}/transactions?api-key=${heliusApiKey}&type=SWAP`;
+        if (lastSignature) {
+          url += `&before=${lastSignature}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Gagal mengambil transaksi: ${response.statusText}`);
+        }
+
+        const batch: HeliusTransaction[] = await response.json();
+
+        // No more transactions
+        if (batch.length === 0) {
+          break;
+        }
+
+        // Add to our collection
+        heliusTransactions.push(...batch);
+
+        // Update cursor for next page
+        lastSignature = batch[batch.length - 1].signature;
+
+        // Check if we've reached transactions before our target year
+        const oldestInBatch = new Date(batch[batch.length - 1].timestamp * 1000);
+        if (oldestInBatch < startDate) {
+          reachedStartOfYear = true;
+        }
+
+        // Small delay to avoid rate limiting
+        if (!reachedStartOfYear && pageCount < maxPages) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
-
-      const heliusTransactions: HeliusTransaction[] = await response.json();
 
       // Filter by date range and parse transactions
       const parsedTransactions = [];
