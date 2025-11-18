@@ -1,36 +1,181 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Taxana
 
-## Getting Started
+Crypto tax calculator for Indonesian Solana users. Calculate PPh and PPN taxes on your DEX swap transactions with automatic FIFO cost basis calculation.
 
-First, run the development server:
+## User Flow
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+1. Connect Wallet
+   └─> User connects Phantom wallet on landing page
+
+2. Select Tax Year
+   └─> Choose 2023, 2024, or 2025
+
+3. Check Database
+   └─> App checks for cached transactions
+   └─> If found: Display results
+   └─> If empty: Show "Fetch from Blockchain" prompt
+
+4. Fetch Transactions (on demand)
+   └─> Click "Refresh" or "Ambil dari Blockchain"
+   └─> Fetches all SWAP transactions from Helius API
+   └─> Parses Jupiter, Raydium, Orca, and other DEX swaps
+   └─> Saves to PostgreSQL database
+
+5. Calculate Taxes
+   └─> Click "Hitung Pajak"
+   └─> Fetches token prices from Birdeye/DexScreener
+   └─> Calculates cost basis using FIFO method
+   └─> Computes gains/losses in IDR
+   └─> Applies Indonesian tax rates
+
+6. Download PDF Report
+   └─> Click "Download PDF"
+   └─> Generates comprehensive tax report
+   └─> Includes all transactions, calculations, and disclaimer
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Non-custodial**: Only reads public blockchain data, no private keys required
+- **Automatic transaction parsing**: Detects swaps from Jupiter, Raydium, Orca, Meteora, and more
+- **FIFO cost basis**: First In, First Out calculation method for gains/losses
+- **Database caching**: Transactions and prices cached to minimize API calls
+- **PDF report generation**: Detailed report ready for SPT filing
+- **Indonesian tax compliance**: PPh 0.2% on sells, PPN 0.22% on buys (DEX rates)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tax Rates
 
-## Learn More
+For transactions through DEX (Unregistered Exchange):
 
-To learn more about Next.js, take a look at the following resources:
+| Tax Type | Rate | Applied To |
+|----------|------|------------|
+| PPh Final | 0.2% | Sell transactions |
+| PPN | 0.22% | Buy transactions |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Framework**: Next.js 16 (App Router)
+- **Database**: PostgreSQL with Drizzle ORM
+- **API**: tRPC for type-safe endpoints
+- **UI**: Tailwind CSS + shadcn/ui components
+- **PDF**: React-PDF for report generation
+- **Wallet**: Solana Wallet Adapter (Phantom)
 
-## Deploy on Vercel
+## Prerequisites
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Node.js 18+
+- pnpm
+- PostgreSQL database
+- Helius API key
+- Birdeye API key
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment Variables
+
+Create a `.env.local` file:
+
+```env
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/taxana
+
+# Helius API (for Solana transactions)
+HELIUS_API_KEY=your_helius_api_key
+
+# Birdeye API (for token prices)
+BIRDEYE_API_KEY=your_birdeye_api_key
+```
+
+## Installation
+
+```bash
+# Install dependencies
+pnpm install
+
+# Push database schema
+pnpm db:push
+
+# Run development server
+pnpm dev
+```
+
+## Project Structure
+
+```
+taxana/
+├── app/
+│   ├── api/
+│   │   ├── pdf/          # PDF generation endpoint
+│   │   └── trpc/         # tRPC API handler
+│   ├── layout.tsx
+│   └── page.tsx          # Main app (landing + dashboard)
+├── components/
+│   ├── ui/               # shadcn components
+│   └── transaction-table.tsx
+├── lib/
+│   ├── db/
+│   │   └── schema.ts     # Drizzle schema
+│   ├── pdf/
+│   │   └── tax-report.tsx # PDF template
+│   ├── services/
+│   │   ├── price.ts      # Token price fetching
+│   │   └── tax-calculator.ts # FIFO calculation
+│   └── trpc/
+│       └── client.ts
+└── server/
+    └── routers/
+        └── transactions.ts # Main API logic
+```
+
+## API Integrations
+
+### Helius
+- Fetches all SWAP transactions for a wallet
+- Uses cursor-based pagination to get complete history
+- Endpoint: `GET /v0/addresses/{address}/transactions?type=SWAP`
+
+### Birdeye
+- Primary source for token prices
+- 3-hour cache for major tokens (SOL, USDC, USDT)
+- Endpoint: `GET /defi/price?address={mint}`
+
+### DexScreener
+- Fallback when Birdeye fails
+- Used for newer/smaller tokens
+- Endpoint: `GET /latest/dex/tokens/{mint}`
+
+## Database Schema
+
+### transactions
+- `id`, `walletAddress`, `signature`, `timestamp`
+- `type` (BUY/SELL), `dex`
+- `inputToken`, `inputAmount`, `inputMint`
+- `outputToken`, `outputAmount`, `outputMint`
+
+### tokenPrices
+- `id`, `tokenMint`, `priceUsd`, `timestamp`
+- Cached prices to reduce API calls
+
+### reports
+- `id`, `walletAddress`, `year`, `generatedAt`
+- `totalTransactions`, `totalTax`, `pdfUrl`
+
+## Development
+
+```bash
+# Type check
+pnpm tsc --noEmit
+
+# Build
+pnpm build
+
+# Database studio
+pnpm db:studio
+```
+
+## Disclaimer
+
+Taxana is a tax calculation tool for informational purposes only. It is not tax advice and should not be relied upon as such. Always consult with a qualified tax professional for your specific tax situation. The creators of Taxana are not responsible for any errors in calculations or any tax liabilities that may arise from using this tool.
+
+## License
+
+MIT
