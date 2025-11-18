@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Spinner } from '@/components/ui/spinner';
+import { Progress } from '@/components/ui/progress';
 import { trpc } from '@/lib/trpc/client';
 import { TransactionTable } from '@/components/transaction-table';
 import { Wallet, FileText, Shield, ArrowRight, Calculator, TrendingUp, TrendingDown } from 'lucide-react';
@@ -31,7 +31,95 @@ export default function Home() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
+  // Progress tracking
+  const [fetchProgress, setFetchProgress] = useState(0);
+  const [fetchStep, setFetchStep] = useState('');
+  const [calcProgress, setCalcProgress] = useState(0);
+  const [calcStep, setCalcStep] = useState('');
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const walletAddress = publicKey?.toBase58() || "";
+
+  // Cleanup progress interval on unmount
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Progress simulation for fetching
+  const startFetchProgress = () => {
+    setFetchProgress(0);
+    setFetchStep('Menghubungi blockchain Solana...');
+
+    let progress = 0;
+    progressIntervalRef.current = setInterval(() => {
+      progress += Math.random() * 8;
+
+      if (progress < 30) {
+        setFetchStep('Mengambil data transaksi dari Helius...');
+      } else if (progress < 60) {
+        setFetchStep('Memproses transaksi swap...');
+      } else if (progress < 85) {
+        setFetchStep('Menyimpan ke database...');
+      } else {
+        setFetchStep('Menyelesaikan...');
+      }
+
+      if (progress >= 90) {
+        progress = 90; // Cap at 90% until actual completion
+      }
+
+      setFetchProgress(progress);
+    }, 300);
+  };
+
+  const stopFetchProgress = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    setFetchProgress(100);
+    setFetchStep('Selesai!');
+  };
+
+  // Progress simulation for tax calculation
+  const startCalcProgress = () => {
+    setCalcProgress(0);
+    setCalcStep('Mengambil harga token...');
+
+    let progress = 0;
+    progressIntervalRef.current = setInterval(() => {
+      progress += Math.random() * 6;
+
+      if (progress < 40) {
+        setCalcStep('Mengambil harga token dari API...');
+      } else if (progress < 60) {
+        setCalcStep('Menghitung cost basis (FIFO)...');
+      } else if (progress < 80) {
+        setCalcStep('Menghitung keuntungan/kerugian...');
+      } else {
+        setCalcStep('Menghitung kewajiban pajak...');
+      }
+
+      if (progress >= 90) {
+        progress = 90;
+      }
+
+      setCalcProgress(progress);
+    }, 400);
+  };
+
+  const stopCalcProgress = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    setCalcProgress(100);
+    setCalcStep('Selesai!');
+  };
 
   // tRPC mutations and queries
   const fetchTransactionsMutation = trpc.transactions.fetchTransactions.useMutation();
@@ -55,18 +143,24 @@ export default function Home() {
     setSelectedYear(year);
     setIsFetching(true);
     setTaxSummary(null);
+    startFetchProgress();
 
     try {
       await fetchTransactionsMutation.mutateAsync({
         walletAddress,
         year,
       });
+      stopFetchProgress();
       // Refetch transactions after fetching from Helius
       transactionsQuery.refetch();
     } catch (error) {
       console.error("Error fetching transactions:", error);
+      stopFetchProgress();
     } finally {
-      setIsFetching(false);
+      // Small delay to show 100% complete
+      setTimeout(() => {
+        setIsFetching(false);
+      }, 500);
     }
   };
 
@@ -74,16 +168,22 @@ export default function Home() {
     if (!selectedYear) return;
 
     setIsCalculating(true);
+    startCalcProgress();
     try {
       const result = await calculateTaxesMutation.mutateAsync({
         walletAddress,
         year: selectedYear,
       });
+      stopCalcProgress();
       setTaxSummary(result);
     } catch (error) {
       console.error('Error calculating taxes:', error);
+      stopCalcProgress();
     } finally {
-      setIsCalculating(false);
+      // Small delay to show 100% complete
+      setTimeout(() => {
+        setIsCalculating(false);
+      }, 500);
     }
   };
 
@@ -232,24 +332,51 @@ export default function Home() {
             </div>
           </div>
         ) : isFetching || fetchTransactionsMutation.isPending ? (
-          // Loading State - Fetching Transactions
+          // Loading State - Fetching Transactions with Progress Bar
           <div className="max-w-xl mx-auto text-center py-16">
-            <Spinner className="h-12 w-12 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">
-              Mengambil Transaksi...
-            </h2>
-            <p className="text-muted-foreground">
-              Sedang mengambil riwayat transaksi dari blockchain Solana untuk
-              tahun {selectedYear}
+            <div className="mb-6">
+              <Calculator className="h-12 w-12 mx-auto mb-4 text-primary animate-pulse" />
+              <h2 className="text-xl font-semibold mb-2">
+                Mengambil Transaksi
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Tahun pajak {selectedYear}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Progress value={fetchProgress} className="h-3" />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{fetchStep}</span>
+                <span className="font-medium">{Math.round(fetchProgress)}%</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-6">
+              Proses ini mungkin memakan waktu beberapa saat untuk wallet dengan banyak transaksi
             </p>
           </div>
         ) : isCalculating ? (
-          // Loading State - Calculating Taxes
+          // Loading State - Calculating Taxes with Progress Bar
           <div className="max-w-xl mx-auto text-center py-16">
-            <Spinner className="h-12 w-12 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Menghitung Pajak...</h2>
-            <p className="text-muted-foreground">
-              Sedang mengambil harga token dan menghitung kewajiban pajak
+            <div className="mb-6">
+              <Calculator className="h-12 w-12 mx-auto mb-4 text-primary animate-pulse" />
+              <h2 className="text-xl font-semibold mb-2">Menghitung Pajak</h2>
+              <p className="text-muted-foreground mb-6">
+                Menganalisis {transactionsQuery.data?.length || 0} transaksi
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Progress value={calcProgress} className="h-3" />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{calcStep}</span>
+                <span className="font-medium">{Math.round(calcProgress)}%</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-6">
+              Mengambil harga dari Birdeye dan DexScreener untuk setiap token
             </p>
           </div>
         ) : (
