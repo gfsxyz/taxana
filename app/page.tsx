@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { trpc } from "@/lib/trpc/client";
 import { TransactionTable } from "@/components/transaction-table";
 import {
@@ -23,6 +30,7 @@ import {
   ChevronRight,
   Github,
   Twitter,
+  RefreshCw,
 } from "lucide-react";
 import type { TaxSummary } from "@/lib/services/tax-calculator";
 
@@ -154,8 +162,15 @@ export default function Home() {
     setTaxSummary(null);
   };
 
-  const handleSelectYear = async (year: number) => {
+  const handleSelectYear = (year: number) => {
     setSelectedYear(year);
+    setTaxSummary(null);
+    // Query will automatically fetch from DB due to enabled condition
+  };
+
+  const handleRefreshTransactions = async () => {
+    if (!selectedYear) return;
+
     setIsFetching(true);
     setTaxSummary(null);
     startFetchProgress();
@@ -163,7 +178,7 @@ export default function Home() {
     try {
       await fetchTransactionsMutation.mutateAsync({
         walletAddress,
-        year,
+        year: selectedYear,
       });
       stopFetchProgress();
       transactionsQuery.refetch();
@@ -563,14 +578,25 @@ export default function Home() {
               ))}
             </div>
           </div>
+        ) : transactionsQuery.isLoading ? (
+          // Loading - Checking database
+          <div className="max-w-xl mx-auto text-center py-16">
+            <div className="h-16 w-16 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto mb-6">
+              <Spinner className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Memuat Data</h2>
+            <p className="text-muted-foreground">
+              Mengecek transaksi tersimpan untuk tahun {selectedYear}...
+            </p>
+          </div>
         ) : isFetching || fetchTransactionsMutation.isPending ? (
-          // Loading - Fetching
+          // Loading - Fetching from Helius
           <div className="max-w-xl mx-auto text-center py-16">
             <div className="mb-6">
               <div className="h-16 w-16 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <Calculator className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Mengambil Transaksi</h2>
+              <h2 className="text-xl font-semibold mb-2">Mengambil dari Blockchain</h2>
               <p className="text-muted-foreground mb-6">Tahun pajak {selectedYear}</p>
             </div>
 
@@ -631,6 +657,14 @@ export default function Home() {
                 >
                   Ganti Tahun
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleRefreshTransactions}
+                  disabled={isFetching}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
                 {!taxSummary && transactionsQuery.data && transactionsQuery.data.length > 0 && (
                   <Button onClick={handleCalculateTaxes}>
                     <Calculator className="h-4 w-4 mr-2" />
@@ -640,134 +674,158 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Empty State - No transactions in DB */}
+            {(!transactionsQuery.data || transactionsQuery.data.length === 0) && !taxSummary && (
+              <Card className="mb-6">
+                <CardContent className="py-12 text-center">
+                  <div className="h-16 w-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-6">
+                    <Wallet className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Belum Ada Data Transaksi</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Tidak ditemukan transaksi untuk tahun {selectedYear} di database.
+                    Klik tombol Refresh untuk mengambil data dari blockchain Solana.
+                  </p>
+                  <Button onClick={handleRefreshTransactions} disabled={isFetching}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                    Ambil dari Blockchain
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Tax Summary Cards */}
-            {taxSummary ? (
-              <>
-                <div className="grid md:grid-cols-4 gap-4 mb-6">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription>Total Transaksi</CardDescription>
-                      <CardTitle className="text-2xl">{taxSummary.totalTransactions}</CardTitle>
+            {transactionsQuery.data && transactionsQuery.data.length > 0 && (
+              taxSummary ? (
+                <>
+                  <div className="grid md:grid-cols-4 gap-4 mb-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardDescription>Total Transaksi</CardDescription>
+                        <CardTitle className="text-2xl">{taxSummary.totalTransactions}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground">
+                          {taxSummary.totalBuys} beli, {taxSummary.totalSells} jual
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardDescription>Keuntungan/Kerugian</CardDescription>
+                        <CardTitle className={`text-2xl ${taxSummary.netGainLossIdr >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                          {taxSummary.netGainLossIdr >= 0 ? (
+                            <TrendingUp className="inline h-5 w-5 mr-1" />
+                          ) : (
+                            <TrendingDown className="inline h-5 w-5 mr-1" />
+                          )}
+                          {formatIDR(Math.abs(taxSummary.netGainLossIdr))}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground">FIFO cost basis</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardDescription>PPh Final (0.2%)</CardDescription>
+                        <CardTitle className="text-2xl">{formatIDR(taxSummary.totalPphTax)}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground">Pajak transaksi jual</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardDescription>PPN (0.22%)</CardDescription>
+                        <CardTitle className="text-2xl">{formatIDR(taxSummary.totalPpnTax)}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground">Pajak transaksi beli</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Total Tax Card */}
+                  <Card className="mb-6 border-primary">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardDescription>Total Kewajiban Pajak</CardDescription>
+                          <CardTitle className="text-3xl text-primary">
+                            {formatIDR(taxSummary.totalTax)}
+                          </CardTitle>
+                        </div>
+                        <Button
+                          onClick={handleDownloadPdf}
+                          disabled={isDownloadingPdf}
+                        >
+                          {isDownloadingPdf ? (
+                            <>
+                              <Spinner className="h-4 w-4 mr-2" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="h-4 w-4 mr-2" />
+                              Download PDF
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-muted-foreground">
-                        {taxSummary.totalBuys} beli, {taxSummary.totalSells} jual
+                      <p className="text-sm text-muted-foreground">
+                        Catatan: Perhitungan ini menggunakan harga token saat ini. Untuk akurasi lebih baik,
+                        gunakan harga historis pada saat transaksi dilakukan.
                       </p>
                     </CardContent>
                   </Card>
-
+                </>
+              ) : (
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardDescription>Keuntungan/Kerugian</CardDescription>
-                      <CardTitle className={`text-2xl ${taxSummary.netGainLossIdr >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                        {taxSummary.netGainLossIdr >= 0 ? (
-                          <TrendingUp className="inline h-5 w-5 mr-1" />
-                        ) : (
-                          <TrendingDown className="inline h-5 w-5 mr-1" />
-                        )}
-                        {formatIDR(Math.abs(taxSummary.netGainLossIdr))}
+                      <CardDescription>Total Transaksi</CardDescription>
+                      <CardTitle className="text-2xl">{transactionsQuery.data?.length || 0}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Status</CardDescription>
+                      <CardTitle className="text-2xl">
+                        <Badge variant="secondary">Belum Dihitung</Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground">FIFO cost basis</p>
-                    </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardDescription>PPh Final (0.2%)</CardDescription>
-                      <CardTitle className="text-2xl">{formatIDR(taxSummary.totalPphTax)}</CardTitle>
+                      <CardDescription>DEX Terdeteksi</CardDescription>
+                      <CardTitle className="text-2xl">
+                        {transactionsQuery.data
+                          ? [...new Set(transactionsQuery.data.map(tx => tx.dex))].filter(Boolean).length
+                          : 0}
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground">Pajak transaksi jual</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription>PPN (0.22%)</CardDescription>
-                      <CardTitle className="text-2xl">{formatIDR(taxSummary.totalPpnTax)}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground">Pajak transaksi beli</p>
-                    </CardContent>
                   </Card>
                 </div>
-
-                {/* Total Tax Card */}
-                <Card className="mb-6 border-primary">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardDescription>Total Kewajiban Pajak</CardDescription>
-                        <CardTitle className="text-3xl text-primary">
-                          {formatIDR(taxSummary.totalTax)}
-                        </CardTitle>
-                      </div>
-                      <Button
-                        onClick={handleDownloadPdf}
-                        disabled={isDownloadingPdf}
-                      >
-                        {isDownloadingPdf ? (
-                          <>
-                            <Spinner className="h-4 w-4 mr-2" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <FileText className="h-4 w-4 mr-2" />
-                            Download PDF
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Catatan: Perhitungan ini menggunakan harga token saat ini. Untuk akurasi lebih baik,
-                      gunakan harga historis pada saat transaksi dilakukan.
-                    </p>
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              <div className="grid md:grid-cols-3 gap-4 mb-6">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Total Transaksi</CardDescription>
-                    <CardTitle className="text-2xl">{transactionsQuery.data?.length || 0}</CardTitle>
-                  </CardHeader>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Status</CardDescription>
-                    <CardTitle className="text-2xl">
-                      <Badge variant="secondary">Belum Dihitung</Badge>
-                    </CardTitle>
-                  </CardHeader>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>DEX Terdeteksi</CardDescription>
-                    <CardTitle className="text-2xl">
-                      {transactionsQuery.data
-                        ? [...new Set(transactionsQuery.data.map(tx => tx.dex))].filter(Boolean).length
-                        : 0}
-                    </CardTitle>
-                  </CardHeader>
-                </Card>
-              </div>
+              )
             )}
 
             {/* Transaction Table */}
-            <Card>
-              <CardContent className="pt-6">
-                <TransactionTable
-                  transactions={transactionsQuery.data || []}
-                  isLoading={transactionsQuery.isLoading}
-                />
-              </CardContent>
-            </Card>
+            {transactionsQuery.data && transactionsQuery.data.length > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <TransactionTable
+                    transactions={transactionsQuery.data || []}
+                    isLoading={transactionsQuery.isLoading}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </main>
