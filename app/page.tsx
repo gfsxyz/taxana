@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Spinner } from '@/components/ui/spinner';
-import { trpc } from '@/lib/trpc/client';
-import { TransactionTable } from '@/components/transaction-table';
+import { useState, useEffect, useRef } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Spinner } from "@/components/ui/spinner";
+import { trpc } from "@/lib/trpc/client";
+import { TransactionTable } from "@/components/transaction-table";
 import {
   Wallet,
   FileText,
@@ -23,15 +22,15 @@ import {
   BarChart3,
   ChevronRight,
   Github,
-  Twitter
-} from 'lucide-react';
-import type { TaxSummary } from '@/lib/services/tax-calculator';
+  Twitter,
+} from "lucide-react";
+import type { TaxSummary } from "@/lib/services/tax-calculator";
 
 // Helper to format IDR
 function formatIDR(amount: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -48,9 +47,9 @@ export default function Home() {
 
   // Progress tracking
   const [fetchProgress, setFetchProgress] = useState(0);
-  const [fetchStep, setFetchStep] = useState('');
+  const [fetchStep, setFetchStep] = useState("");
   const [calcProgress, setCalcProgress] = useState(0);
-  const [calcStep, setCalcStep] = useState('');
+  const [calcStep, setCalcStep] = useState("");
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const walletAddress = publicKey?.toBase58() || "";
@@ -67,20 +66,20 @@ export default function Home() {
   // Progress simulation for fetching
   const startFetchProgress = () => {
     setFetchProgress(0);
-    setFetchStep('Menghubungi blockchain Solana...');
+    setFetchStep("Menghubungi blockchain Solana...");
 
     let progress = 0;
     progressIntervalRef.current = setInterval(() => {
       progress += Math.random() * 8;
 
       if (progress < 30) {
-        setFetchStep('Mengambil data transaksi dari Helius...');
+        setFetchStep("Mengambil data transaksi dari Helius...");
       } else if (progress < 60) {
-        setFetchStep('Memproses transaksi swap...');
+        setFetchStep("Memproses transaksi swap...");
       } else if (progress < 85) {
-        setFetchStep('Menyimpan ke database...');
+        setFetchStep("Menyimpan ke database...");
       } else {
-        setFetchStep('Menyelesaikan...');
+        setFetchStep("Menyelesaikan...");
       }
 
       if (progress >= 90) {
@@ -97,26 +96,26 @@ export default function Home() {
       progressIntervalRef.current = null;
     }
     setFetchProgress(100);
-    setFetchStep('Selesai!');
+    setFetchStep("Selesai!");
   };
 
   // Progress simulation for tax calculation
   const startCalcProgress = () => {
     setCalcProgress(0);
-    setCalcStep('Mengambil harga token...');
+    setCalcStep("Mengambil harga token...");
 
     let progress = 0;
     progressIntervalRef.current = setInterval(() => {
       progress += Math.random() * 6;
 
       if (progress < 40) {
-        setCalcStep('Mengambil harga token dari API...');
+        setCalcStep("Mengambil harga token dari API...");
       } else if (progress < 60) {
-        setCalcStep('Menghitung cost basis (FIFO)...');
+        setCalcStep("Menghitung cost basis (FIFO)...");
       } else if (progress < 80) {
-        setCalcStep('Menghitung keuntungan/kerugian...');
+        setCalcStep("Menghitung keuntungan/kerugian...");
       } else {
-        setCalcStep('Menghitung kewajiban pajak...');
+        setCalcStep("Menghitung kewajiban pajak...");
       }
 
       if (progress >= 90) {
@@ -133,11 +132,12 @@ export default function Home() {
       progressIntervalRef.current = null;
     }
     setCalcProgress(100);
-    setCalcStep('Selesai!');
+    setCalcStep("Selesai!");
   };
 
   // tRPC mutations and queries
-  const fetchTransactionsMutation = trpc.transactions.fetchTransactions.useMutation();
+  const fetchTransactionsMutation =
+    trpc.transactions.fetchTransactions.useMutation();
   const calculateTaxesMutation = trpc.transactions.calculateTaxes.useMutation();
   const transactionsQuery = trpc.transactions.getTransactions.useQuery(
     { walletAddress, year: selectedYear || 2024 },
@@ -190,7 +190,7 @@ export default function Home() {
       stopCalcProgress();
       setTaxSummary(result);
     } catch (error) {
-      console.error('Error calculating taxes:', error);
+      console.error("Error calculating taxes:", error);
       stopCalcProgress();
     } finally {
       setTimeout(() => {
@@ -204,10 +204,10 @@ export default function Home() {
 
     setIsDownloadingPdf(true);
     try {
-      const response = await fetch('/api/pdf', {
-        method: 'POST',
+      const response = await fetch("/api/pdf", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           walletAddress,
@@ -216,20 +216,23 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+        throw new Error("Failed to generate PDF");
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `taxana-report-${selectedYear}-${walletAddress.slice(0, 8)}.pdf`;
+      a.download = `taxana-report-${selectedYear}-${walletAddress.slice(
+        0,
+        8
+      )}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error("Error downloading PDF:", error);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -258,20 +261,10 @@ export default function Home() {
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
                 <Calculator className="h-4 w-4 text-white" />
               </div>
-              <span className="text-lg font-semibold tracking-tight">Taxana</span>
+              <span className="text-lg font-semibold tracking-tight">
+                Taxana
+              </span>
             </div>
-
-            <nav className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">
-                Features
-              </a>
-              <a href="#pricing" className="text-sm text-gray-400 hover:text-white transition-colors">
-                Pricing
-              </a>
-              <a href="#docs" className="text-sm text-gray-400 hover:text-white transition-colors">
-                Docs
-              </a>
-            </nav>
 
             <Button
               onClick={handleConnectWallet}
@@ -307,7 +300,7 @@ export default function Home() {
               {/* Subheadline */}
               <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 animate-fade-in-up animation-delay-100">
                 Kalkulator pajak otomatis untuk trader Solana Indonesia.
-                Dukung semua DEX populer. Generate laporan PDF untuk SPT dalam hitungan detik.
+                Generate laporan PDF untuk SPT dalam hitungan detik.
               </p>
 
               {/* CTA Buttons */}
@@ -320,15 +313,6 @@ export default function Home() {
                   <Wallet className="h-5 w-5 mr-2" />
                   Connect Phantom Wallet
                   <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="text-gray-400 hover:text-white hover:bg-white/5 rounded-full px-6 h-12"
-                >
-                  Lihat Demo
-                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
 
@@ -359,9 +343,12 @@ export default function Home() {
                   <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Wallet className="h-5 w-5 text-emerald-400" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Tanpa Registrasi</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Tanpa Registrasi
+                  </h3>
                   <p className="text-sm text-gray-400 leading-relaxed">
-                    Cukup hubungkan wallet Phantom Anda. Tidak perlu email, tidak perlu password. Data diproses secara aman.
+                    Cukup hubungkan wallet Phantom Anda. Tidak perlu email,
+                    tidak perlu password. Data diproses secara aman.
                   </p>
                 </div>
               </div>
@@ -372,9 +359,12 @@ export default function Home() {
                   <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <BarChart3 className="h-5 w-5 text-purple-400" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">FIFO Cost Basis</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    FIFO Cost Basis
+                  </h3>
                   <p className="text-sm text-gray-400 leading-relaxed">
-                    Perhitungan keuntungan/kerugian menggunakan metode FIFO yang sesuai standar akuntansi.
+                    Perhitungan keuntungan/kerugian menggunakan metode FIFO yang
+                    sesuai standar akuntansi.
                   </p>
                 </div>
               </div>
@@ -387,7 +377,8 @@ export default function Home() {
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Laporan PDF</h3>
                   <p className="text-sm text-gray-400 leading-relaxed">
-                    Generate laporan lengkap dengan detail transaksi. Siap untuk pelaporan SPT tahunan Anda.
+                    Generate laporan lengkap dengan detail transaksi. Siap untuk
+                    pelaporan SPT tahunan Anda.
                   </p>
                 </div>
               </div>
@@ -400,20 +391,32 @@ export default function Home() {
               <div className="rounded-2xl bg-gradient-to-b from-white/5 to-transparent p-px">
                 <div className="rounded-2xl bg-black/50 backdrop-blur-sm p-8">
                   <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold mb-2">Tarif Pajak Crypto Indonesia</h2>
-                    <p className="text-gray-400">Untuk transaksi melalui DEX (Unregistered Exchange)</p>
+                    <h2 className="text-2xl font-bold mb-2">
+                      Tarif Pajak Crypto Indonesia
+                    </h2>
+                    <p className="text-gray-400">
+                      Untuk transaksi melalui DEX (Unregistered Exchange)
+                    </p>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div className="text-center p-6 rounded-xl bg-white/5">
-                      <div className="text-3xl font-bold text-emerald-400 mb-2">0.2%</div>
+                      <div className="text-3xl font-bold text-emerald-400 mb-2">
+                        0.2%
+                      </div>
                       <div className="text-sm text-gray-400">PPh Final</div>
-                      <div className="text-xs text-gray-500 mt-1">Transaksi Jual</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Transaksi Jual
+                      </div>
                     </div>
                     <div className="text-center p-6 rounded-xl bg-white/5">
-                      <div className="text-3xl font-bold text-purple-400 mb-2">0.22%</div>
+                      <div className="text-3xl font-bold text-purple-400 mb-2">
+                        0.22%
+                      </div>
                       <div className="text-sm text-gray-400">PPN</div>
-                      <div className="text-xs text-gray-500 mt-1">Transaksi Beli</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Transaksi Beli
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -434,14 +437,21 @@ export default function Home() {
               </div>
 
               <p className="text-xs text-gray-500 text-center">
-                Taxana adalah alat bantu perhitungan pajak. Selalu konsultasikan dengan konsultan pajak profesional.
+                Taxana adalah alat bantu perhitungan pajak. Selalu konsultasikan
+                dengan konsultan pajak profesional.
               </p>
 
               <div className="flex items-center gap-4">
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <a
+                  href="#"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   <Twitter className="h-4 w-4" />
                 </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <a
+                  href="#"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   <Github className="h-4 w-4" />
                 </a>
               </div>
@@ -452,8 +462,12 @@ export default function Home() {
         {/* CSS animations */}
         <style jsx global>{`
           @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
           }
 
           @keyframes fade-in-up {
@@ -513,7 +527,10 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="font-mono bg-white/10 text-gray-300 border-0">
+            <Badge
+              variant="secondary"
+              className="font-mono bg-white/10 text-gray-300 border-0"
+            >
               {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
             </Badge>
             <Button
@@ -561,7 +578,9 @@ export default function Home() {
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <Calculator className="h-8 w-8 text-emerald-400" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Mengambil Transaksi</h2>
+              <h2 className="text-xl font-semibold mb-2">
+                Mengambil Transaksi
+              </h2>
               <p className="text-gray-400 mb-6">Tahun pajak {selectedYear}</p>
             </div>
 
@@ -569,12 +588,15 @@ export default function Home() {
               <Progress value={fetchProgress} className="h-2 bg-white/10" />
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">{fetchStep}</span>
-                <span className="font-medium text-emerald-400">{Math.round(fetchProgress)}%</span>
+                <span className="font-medium text-emerald-400">
+                  {Math.round(fetchProgress)}%
+                </span>
               </div>
             </div>
 
             <p className="text-xs text-gray-500 mt-6">
-              Proses ini mungkin memakan waktu beberapa saat untuk wallet dengan banyak transaksi
+              Proses ini mungkin memakan waktu beberapa saat untuk wallet dengan
+              banyak transaksi
             </p>
           </div>
         ) : isCalculating ? (
@@ -594,7 +616,9 @@ export default function Home() {
               <Progress value={calcProgress} className="h-2 bg-white/10" />
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">{calcStep}</span>
-                <span className="font-medium text-purple-400">{Math.round(calcProgress)}%</span>
+                <span className="font-medium text-purple-400">
+                  {Math.round(calcProgress)}%
+                </span>
               </div>
             </div>
 
@@ -623,15 +647,17 @@ export default function Home() {
                 >
                   Ganti Tahun
                 </Button>
-                {!taxSummary && transactionsQuery.data && transactionsQuery.data.length > 0 && (
-                  <Button
-                    onClick={handleCalculateTaxes}
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
-                  >
-                    <Calculator className="h-4 w-4 mr-2" />
-                    Hitung Pajak
-                  </Button>
-                )}
+                {!taxSummary &&
+                  transactionsQuery.data &&
+                  transactionsQuery.data.length > 0 && (
+                    <Button
+                      onClick={handleCalculateTaxes}
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
+                    >
+                      <Calculator className="h-4 w-4 mr-2" />
+                      Hitung Pajak
+                    </Button>
+                  )}
               </div>
             </div>
 
@@ -640,16 +666,28 @@ export default function Home() {
               <>
                 <div className="grid md:grid-cols-4 gap-4 mb-6">
                   <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-xs text-gray-400 mb-1">Total Transaksi</p>
-                    <p className="text-2xl font-bold">{taxSummary.totalTransactions}</p>
+                    <p className="text-xs text-gray-400 mb-1">
+                      Total Transaksi
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {taxSummary.totalTransactions}
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {taxSummary.totalBuys} beli, {taxSummary.totalSells} jual
                     </p>
                   </div>
 
                   <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-xs text-gray-400 mb-1">Keuntungan/Kerugian</p>
-                    <p className={`text-2xl font-bold ${taxSummary.netGainLossIdr >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <p className="text-xs text-gray-400 mb-1">
+                      Keuntungan/Kerugian
+                    </p>
+                    <p
+                      className={`text-2xl font-bold ${
+                        taxSummary.netGainLossIdr >= 0
+                          ? "text-emerald-400"
+                          : "text-red-400"
+                      }`}
+                    >
                       {taxSummary.netGainLossIdr >= 0 ? (
                         <TrendingUp className="inline h-5 w-5 mr-1" />
                       ) : (
@@ -657,19 +695,31 @@ export default function Home() {
                       )}
                       {formatIDR(Math.abs(taxSummary.netGainLossIdr))}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">FIFO cost basis</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      FIFO cost basis
+                    </p>
                   </div>
 
                   <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-xs text-gray-400 mb-1">PPh Final (0.2%)</p>
-                    <p className="text-2xl font-bold">{formatIDR(taxSummary.totalPphTax)}</p>
-                    <p className="text-xs text-gray-500 mt-1">Pajak transaksi jual</p>
+                    <p className="text-xs text-gray-400 mb-1">
+                      PPh Final (0.2%)
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {formatIDR(taxSummary.totalPphTax)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Pajak transaksi jual
+                    </p>
                   </div>
 
                   <div className="rounded-xl bg-white/5 border border-white/10 p-4">
                     <p className="text-xs text-gray-400 mb-1">PPN (0.22%)</p>
-                    <p className="text-2xl font-bold">{formatIDR(taxSummary.totalPpnTax)}</p>
-                    <p className="text-xs text-gray-500 mt-1">Pajak transaksi beli</p>
+                    <p className="text-2xl font-bold">
+                      {formatIDR(taxSummary.totalPpnTax)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Pajak transaksi beli
+                    </p>
                   </div>
                 </div>
 
@@ -677,7 +727,9 @@ export default function Home() {
                 <div className="rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 p-6 mb-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-400 mb-1">Total Kewajiban Pajak</p>
+                      <p className="text-sm text-gray-400 mb-1">
+                        Total Kewajiban Pajak
+                      </p>
                       <p className="text-3xl font-bold text-emerald-400">
                         {formatIDR(taxSummary.totalTax)}
                       </p>
@@ -701,8 +753,9 @@ export default function Home() {
                     </Button>
                   </div>
                   <p className="text-xs text-gray-500 mt-4">
-                    Catatan: Perhitungan ini menggunakan harga token saat ini. Untuk akurasi lebih baik,
-                    gunakan harga historis pada saat transaksi dilakukan.
+                    Catatan: Perhitungan ini menggunakan harga token saat ini.
+                    Untuk akurasi lebih baik, gunakan harga historis pada saat
+                    transaksi dilakukan.
                   </p>
                 </div>
               </>
@@ -710,7 +763,9 @@ export default function Home() {
               <div className="grid md:grid-cols-3 gap-4 mb-6">
                 <div className="rounded-xl bg-white/5 border border-white/10 p-4">
                   <p className="text-xs text-gray-400 mb-1">Total Transaksi</p>
-                  <p className="text-2xl font-bold">{transactionsQuery.data?.length || 0}</p>
+                  <p className="text-2xl font-bold">
+                    {transactionsQuery.data?.length || 0}
+                  </p>
                 </div>
                 <div className="rounded-xl bg-white/5 border border-white/10 p-4">
                   <p className="text-xs text-gray-400 mb-1">Status</p>
@@ -722,7 +777,11 @@ export default function Home() {
                   <p className="text-xs text-gray-400 mb-1">DEX Terdeteksi</p>
                   <p className="text-2xl font-bold">
                     {transactionsQuery.data
-                      ? [...new Set(transactionsQuery.data.map(tx => tx.dex))].filter(Boolean).length
+                      ? [
+                          ...new Set(
+                            transactionsQuery.data.map((tx) => tx.dex)
+                          ),
+                        ].filter(Boolean).length
                       : 0}
                   </p>
                 </div>
