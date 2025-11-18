@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Spinner } from '@/components/ui/spinner';
-import { trpc } from '@/lib/trpc/client';
-import { TransactionTable } from '@/components/transaction-table';
-import { Wallet, FileText, Shield, ArrowRight, Calculator } from 'lucide-react';
+import { useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
+import { trpc } from "@/lib/trpc/client";
+import { TransactionTable } from "@/components/transaction-table";
+import { Wallet, FileText, Shield, ArrowRight, Calculator } from "lucide-react";
 
 export default function Home() {
   const { connected, publicKey, disconnect } = useWallet();
@@ -17,10 +23,11 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
 
-  const walletAddress = publicKey?.toBase58() || '';
+  const walletAddress = publicKey?.toBase58() || "";
 
   // tRPC mutations and queries
-  const fetchTransactionsMutation = trpc.transactions.fetchTransactions.useMutation();
+  const fetchTransactionsMutation =
+    trpc.transactions.fetchTransactions.useMutation();
   const transactionsQuery = trpc.transactions.getTransactions.useQuery(
     { walletAddress, year: selectedYear || 2024 },
     { enabled: connected && !!selectedYear }
@@ -47,7 +54,7 @@ export default function Home() {
       // Refetch transactions after fetching from Helius
       transactionsQuery.refetch();
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
     } finally {
       setIsFetching(false);
     }
@@ -92,7 +99,8 @@ export default function Home() {
               Hitung Pajak Crypto Solana Anda
             </h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Kalkulator pajak otomatis untuk trader Solana Indonesia. Dukung Jupiter, Raydium, dan Orca. Laporan PDF siap untuk pelaporan SPT.
+              Kalkulator pajak otomatis untuk trader Solana Indonesia. Dukung
+              Jupiter, Raydium, dan Orca. Laporan PDF siap untuk pelaporan SPT.
             </p>
 
             <Button size="lg" onClick={handleConnectWallet} className="mb-12">
@@ -108,7 +116,8 @@ export default function Home() {
                   <Wallet className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-lg">Tanpa Registrasi</CardTitle>
                   <CardDescription>
-                    Cukup hubungkan wallet Phantom Anda. Data diproses secara aman dan tidak disimpan permanen.
+                    Cukup hubungkan wallet Phantom Anda. Data diproses secara
+                    aman dan tidak disimpan permanen.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -118,7 +127,8 @@ export default function Home() {
                   <FileText className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-lg">Laporan PDF</CardTitle>
                   <CardDescription>
-                    Generate laporan pajak lengkap dengan detail transaksi, siap untuk pelaporan SPT tahunan.
+                    Generate laporan pajak lengkap dengan detail transaksi, siap
+                    untuk pelaporan SPT tahunan.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -128,7 +138,8 @@ export default function Home() {
                   <Shield className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-lg">Sesuai Regulasi</CardTitle>
                   <CardDescription>
-                    Perhitungan PPh 0.2% dan PPN 0.22% sesuai peraturan pajak crypto Indonesia untuk DEX.
+                    Perhitungan PPh 0.2% dan PPN 0.22% sesuai peraturan pajak
+                    crypto Indonesia untuk DEX.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -160,9 +171,12 @@ export default function Home() {
           // Loading State
           <div className="max-w-xl mx-auto text-center py-16">
             <Spinner className="h-12 w-12 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Mengambil Transaksi...</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Mengambil Transaksi...
+            </h2>
             <p className="text-muted-foreground">
-              Sedang mengambil riwayat transaksi dari blockchain Solana untuk tahun {selectedYear}
+              Sedang mengambil riwayat transaksi dari blockchain Solana untuk
+              tahun {selectedYear}
             </p>
           </div>
         ) : (
@@ -176,10 +190,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedYear(null)}
-                >
+                <Button variant="outline" onClick={() => setSelectedYear(null)}>
                   Ganti Tahun
                 </Button>
               </div>
@@ -208,7 +219,11 @@ export default function Home() {
                   <CardDescription>DEX Terdeteksi</CardDescription>
                   <CardTitle className="text-2xl">
                     {transactionsQuery.data
-                      ? [...new Set(transactionsQuery.data.map(tx => tx.dex))].filter(Boolean).length
+                      ? [
+                          ...new Set(
+                            transactionsQuery.data.map((tx) => tx.dex)
+                          ),
+                        ].filter(Boolean).length
                       : 0}
                   </CardTitle>
                 </CardHeader>
@@ -232,7 +247,8 @@ export default function Home() {
       <footer className="border-t border-border mt-16">
         <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
           <p>
-            Taxana adalah alat bantu perhitungan pajak. Selalu konsultasikan dengan konsultan pajak profesional.
+            Taxana adalah alat bantu perhitungan pajak. Selalu konsultasikan
+            dengan konsultan pajak profesional.
           </p>
         </div>
       </footer>
