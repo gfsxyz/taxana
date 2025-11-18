@@ -173,6 +173,54 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#9ca3af',
   },
+  explanationSection: {
+    marginBottom: 15,
+  },
+  explanationTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#111827',
+  },
+  explanationText: {
+    fontSize: 9,
+    color: '#374151',
+    lineHeight: 1.5,
+    marginBottom: 5,
+  },
+  bulletPoint: {
+    fontSize: 9,
+    color: '#374151',
+    lineHeight: 1.5,
+    marginLeft: 10,
+    marginBottom: 3,
+  },
+  tosBox: {
+    padding: 15,
+    backgroundColor: '#fef2f2',
+    borderRadius: 4,
+    border: '1px solid #ef4444',
+    marginTop: 15,
+  },
+  tosTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#991b1b',
+    marginBottom: 10,
+  },
+  tosText: {
+    fontSize: 8,
+    color: '#7f1d1d',
+    lineHeight: 1.5,
+    marginBottom: 5,
+  },
+  tosBullet: {
+    fontSize: 8,
+    color: '#7f1d1d',
+    lineHeight: 1.5,
+    marginLeft: 10,
+    marginBottom: 3,
+  },
 });
 
 interface TaxReportPDFProps {
@@ -313,6 +361,119 @@ export function TaxReportPDF({
         <Text style={styles.footer}>
           Taxana - Kalkulator Pajak Crypto Solana Indonesia
         </Text>
+        <Text
+          style={styles.pageNumber}
+          render={({ pageNumber, totalPages }) =>
+            `${pageNumber} / ${totalPages}`
+          }
+        />
+      </Page>
+
+      {/* Calculation Explanation & Disclaimer Page */}
+      <Page size="A4" style={styles.page}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Penjelasan Perhitungan</Text>
+
+          {/* FIFO Explanation */}
+          <View style={styles.explanationSection}>
+            <Text style={styles.explanationTitle}>Metode FIFO (First In, First Out)</Text>
+            <Text style={styles.explanationText}>
+              Perhitungan keuntungan/kerugian menggunakan metode FIFO, dimana aset yang dibeli
+              pertama akan dijual pertama. Setiap kali Anda menjual token, sistem akan menghitung
+              cost basis dari pembelian paling awal yang belum terjual.
+            </Text>
+            <Text style={styles.bulletPoint}>
+              - Beli 10 SOL @ Rp 100.000 (total Rp 1.000.000)
+            </Text>
+            <Text style={styles.bulletPoint}>
+              - Beli 5 SOL @ Rp 120.000 (total Rp 600.000)
+            </Text>
+            <Text style={styles.bulletPoint}>
+              - Jual 8 SOL @ Rp 150.000 (total Rp 1.200.000)
+            </Text>
+            <Text style={styles.bulletPoint}>
+              - Cost basis: 8 x Rp 100.000 = Rp 800.000 (dari lot pertama)
+            </Text>
+            <Text style={styles.bulletPoint}>
+              - Keuntungan: Rp 1.200.000 - Rp 800.000 = Rp 400.000
+            </Text>
+          </View>
+
+          {/* Tax Rate Explanation */}
+          <View style={styles.explanationSection}>
+            <Text style={styles.explanationTitle}>Tarif Pajak Crypto Indonesia</Text>
+            <Text style={styles.explanationText}>
+              Berdasarkan PMK 68/2022, transaksi aset kripto dikenakan pajak sebagai berikut:
+            </Text>
+            <Text style={styles.bulletPoint}>
+              - PPh Final 0.2%: Dikenakan pada transaksi penjualan melalui exchange yang
+              tidak terdaftar di Bappebti (termasuk DEX seperti Jupiter, Raydium, dll)
+            </Text>
+            <Text style={styles.bulletPoint}>
+              - PPN 0.22%: Dikenakan pada transaksi pembelian melalui exchange yang tidak
+              terdaftar di Bappebti
+            </Text>
+            <Text style={styles.explanationText}>
+              Catatan: Exchange terdaftar Bappebti memiliki tarif lebih rendah (PPh 0.1%, PPN 0.11%).
+            </Text>
+          </View>
+
+          {/* Price Data Explanation */}
+          <View style={styles.explanationSection}>
+            <Text style={styles.explanationTitle}>Sumber Data Harga</Text>
+            <Text style={styles.explanationText}>
+              Harga token diambil dari berbagai sumber (Birdeye, DexScreener) dan dikonversi
+              dari USD ke IDR menggunakan kurs saat ini. PENTING: Harga yang digunakan adalah
+              harga saat laporan dibuat, BUKAN harga historis pada saat transaksi. Hal ini dapat
+              menyebabkan perbedaan dengan nilai transaksi sebenarnya.
+            </Text>
+          </View>
+        </View>
+
+        {/* Terms of Service / Disclaimer */}
+        <View style={styles.tosBox}>
+          <Text style={styles.tosTitle}>SYARAT & KETENTUAN PENGGUNAAN</Text>
+
+          <Text style={styles.tosText}>
+            PENTING - BACA DENGAN SEKSAMA:
+          </Text>
+
+          <Text style={styles.tosBullet}>
+            1. TUJUAN HIBURAN & EDUKASI: Taxana dibuat untuk tujuan hiburan dan edukasi saja.
+            Kami BUKAN konsultan pajak, akuntan, atau penasihat keuangan berlisensi.
+          </Text>
+
+          <Text style={styles.tosBullet}>
+            2. BUKAN NASIHAT PAJAK: Laporan ini BUKAN merupakan nasihat pajak profesional dan
+            tidak boleh dijadikan dasar utama untuk pelaporan SPT Anda.
+          </Text>
+
+          <Text style={styles.tosBullet}>
+            3. TIDAK ADA JAMINAN AKURASI: Perhitungan mungkin mengandung kesalahan karena
+            keterbatasan data harga historis, parsing transaksi, dan faktor lainnya.
+          </Text>
+
+          <Text style={styles.tosBullet}>
+            4. KONSULTASI PROFESIONAL: WAJIB konsultasikan dengan konsultan pajak profesional
+            sebelum melakukan pelaporan pajak resmi.
+          </Text>
+
+          <Text style={styles.tosBullet}>
+            5. TANGGUNG JAWAB PENGGUNA: Pengguna bertanggung jawab penuh atas keakuratan
+            pelaporan pajak mereka. Taxana tidak bertanggung jawab atas denda, penalti,
+            atau kerugian akibat penggunaan laporan ini.
+          </Text>
+
+          <Text style={styles.tosBullet}>
+            6. PERUBAHAN REGULASI: Regulasi pajak crypto dapat berubah sewaktu-waktu.
+            Pastikan untuk selalu mengecek peraturan terbaru dari Dirjen Pajak dan Bappebti.
+          </Text>
+
+          <Text style={styles.tosText}>
+            Dengan menggunakan Taxana, Anda menyetujui syarat dan ketentuan di atas.
+          </Text>
+        </View>
+
         <Text
           style={styles.pageNumber}
           render={({ pageNumber, totalPages }) =>
