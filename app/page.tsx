@@ -29,6 +29,7 @@ export default function Home() {
   const [isFetching, setIsFetching] = useState(false);
   const [taxSummary, setTaxSummary] = useState<TaxSummary | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const walletAddress = publicKey?.toBase58() || "";
 
@@ -83,6 +84,43 @@ export default function Home() {
       console.error('Error calculating taxes:', error);
     } finally {
       setIsCalculating(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!selectedYear || !taxSummary) return;
+
+    setIsDownloadingPdf(true);
+    try {
+      const response = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress,
+          year: selectedYear,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `taxana-report-${selectedYear}-${walletAddress.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+    } finally {
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -319,9 +357,21 @@ export default function Home() {
                           {formatIDR(taxSummary.totalTax)}
                         </CardTitle>
                       </div>
-                      <Button disabled>
-                        <FileText className="h-4 w-4 mr-2" />
-                        Download PDF (Coming Soon)
+                      <Button
+                        onClick={handleDownloadPdf}
+                        disabled={isDownloadingPdf}
+                      >
+                        {isDownloadingPdf ? (
+                          <>
+                            <Spinner className="h-4 w-4 mr-2" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Download PDF
+                          </>
+                        )}
                       </Button>
                     </div>
                   </CardHeader>
