@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -30,7 +30,7 @@ export default function Home() {
   const [taxSummary, setTaxSummary] = useState<TaxSummary | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  const walletAddress = publicKey?.toBase58() || '';
+  const walletAddress = publicKey?.toBase58() || "";
 
   // tRPC mutations and queries
   const fetchTransactionsMutation = trpc.transactions.fetchTransactions.useMutation();
@@ -63,7 +63,7 @@ export default function Home() {
       // Refetch transactions after fetching from Helius
       transactionsQuery.refetch();
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
     } finally {
       setIsFetching(false);
     }
@@ -125,7 +125,8 @@ export default function Home() {
               Hitung Pajak Crypto Solana Anda
             </h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Kalkulator pajak otomatis untuk trader Solana Indonesia. Dukung Jupiter, Raydium, dan Orca. Laporan PDF siap untuk pelaporan SPT.
+              Kalkulator pajak otomatis untuk trader Solana Indonesia. Dukung
+              Jupiter, Raydium, dan Orca. Laporan PDF siap untuk pelaporan SPT.
             </p>
 
             <Button size="lg" onClick={handleConnectWallet} className="mb-12">
@@ -141,7 +142,8 @@ export default function Home() {
                   <Wallet className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-lg">Tanpa Registrasi</CardTitle>
                   <CardDescription>
-                    Cukup hubungkan wallet Phantom Anda. Data diproses secara aman dan tidak disimpan permanen.
+                    Cukup hubungkan wallet Phantom Anda. Data diproses secara
+                    aman dan tidak disimpan permanen.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -151,7 +153,8 @@ export default function Home() {
                   <FileText className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-lg">Laporan PDF</CardTitle>
                   <CardDescription>
-                    Generate laporan pajak lengkap dengan detail transaksi, siap untuk pelaporan SPT tahunan.
+                    Generate laporan pajak lengkap dengan detail transaksi, siap
+                    untuk pelaporan SPT tahunan.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -161,7 +164,8 @@ export default function Home() {
                   <Shield className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-lg">Sesuai Regulasi</CardTitle>
                   <CardDescription>
-                    Perhitungan PPh 0.2% dan PPN 0.22% sesuai peraturan pajak crypto Indonesia untuk DEX.
+                    Perhitungan PPh 0.2% dan PPN 0.22% sesuai peraturan pajak
+                    crypto Indonesia untuk DEX.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -193,9 +197,12 @@ export default function Home() {
           // Loading State - Fetching Transactions
           <div className="max-w-xl mx-auto text-center py-16">
             <Spinner className="h-12 w-12 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Mengambil Transaksi...</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Mengambil Transaksi...
+            </h2>
             <p className="text-muted-foreground">
-              Sedang mengambil riwayat transaksi dari blockchain Solana untuk tahun {selectedYear}
+              Sedang mengambil riwayat transaksi dari blockchain Solana untuk
+              tahun {selectedYear}
             </p>
           </div>
         ) : isCalculating ? (
@@ -375,7 +382,8 @@ export default function Home() {
       <footer className="border-t border-border mt-16">
         <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
           <p>
-            Taxana adalah alat bantu perhitungan pajak. Selalu konsultasikan dengan konsultan pajak profesional.
+            Taxana adalah alat bantu perhitungan pajak. Selalu konsultasikan
+            dengan konsultan pajak profesional.
           </p>
         </div>
       </footer>
