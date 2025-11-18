@@ -2,7 +2,7 @@ import { z } from 'zod/v4';
 import { router, publicProcedure } from '../trpc/trpc';
 import { db, transactions } from '@/lib/db';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
-import { calculateTaxes } from '@/lib/services/tax-calculator';
+import { calculateTaxes as calculateTaxesService } from '@/lib/services/tax-calculator';
 
 // Helius API types
 interface HeliusTransaction {
@@ -312,7 +312,7 @@ export const transactionsRouter = router({
         .orderBy(desc(transactions.timestamp));
 
       // Calculate taxes
-      const taxSummary = await calculateTaxes(txs);
+      const taxSummary = await calculateTaxesService(txs);
 
       return taxSummary;
     }),
