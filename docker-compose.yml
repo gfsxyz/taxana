@@ -8,7 +8,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://taxana:taxana@db:5432/taxana
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-taxana}:${POSTGRES_PASSWORD:-taxana_dev}@db:5432/${POSTGRES_DB:-taxana}
       - HELIUS_API_KEY=${HELIUS_API_KEY}
       - BIRDEYE_API_KEY=${BIRDEYE_API_KEY}
     depends_on:
@@ -24,13 +24,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=taxana
-      - POSTGRES_PASSWORD=taxana
-      - POSTGRES_DB=taxana
+      - POSTGRES_USER=${POSTGRES_USER:-taxana}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-taxana_dev}
+      - POSTGRES_DB=${POSTGRES_DB:-taxana}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U taxana"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-taxana}"]
       interval: 5s
       timeout: 5s
       retries: 5
