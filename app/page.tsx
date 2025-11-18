@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Spinner } from '@/components/ui/spinner';
-import { trpc } from '@/lib/trpc/client';
-import { TransactionTable } from '@/components/transaction-table';
+import { useState, useEffect, useRef } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Spinner } from "@/components/ui/spinner";
+import { trpc } from "@/lib/trpc/client";
+import { TransactionTable } from "@/components/transaction-table";
 import {
   Wallet,
   FileText,
@@ -23,15 +22,15 @@ import {
   BarChart3,
   ChevronRight,
   Github,
-  Twitter
-} from 'lucide-react';
-import type { TaxSummary } from '@/lib/services/tax-calculator';
+  Twitter,
+} from "lucide-react";
+import type { TaxSummary } from "@/lib/services/tax-calculator";
 
 // Helper to format IDR
 function formatIDR(amount: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -48,9 +47,9 @@ export default function Home() {
 
   // Progress tracking
   const [fetchProgress, setFetchProgress] = useState(0);
-  const [fetchStep, setFetchStep] = useState('');
+  const [fetchStep, setFetchStep] = useState("");
   const [calcProgress, setCalcProgress] = useState(0);
-  const [calcStep, setCalcStep] = useState('');
+  const [calcStep, setCalcStep] = useState("");
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const walletAddress = publicKey?.toBase58() || "";
@@ -67,20 +66,20 @@ export default function Home() {
   // Progress simulation for fetching
   const startFetchProgress = () => {
     setFetchProgress(0);
-    setFetchStep('Menghubungi blockchain Solana...');
+    setFetchStep("Menghubungi blockchain Solana...");
 
     let progress = 0;
     progressIntervalRef.current = setInterval(() => {
       progress += Math.random() * 8;
 
       if (progress < 30) {
-        setFetchStep('Mengambil data transaksi dari Helius...');
+        setFetchStep("Mengambil data transaksi dari Helius...");
       } else if (progress < 60) {
-        setFetchStep('Memproses transaksi swap...');
+        setFetchStep("Memproses transaksi swap...");
       } else if (progress < 85) {
-        setFetchStep('Menyimpan ke database...');
+        setFetchStep("Menyimpan ke database...");
       } else {
-        setFetchStep('Menyelesaikan...');
+        setFetchStep("Menyelesaikan...");
       }
 
       if (progress >= 90) {
@@ -97,26 +96,26 @@ export default function Home() {
       progressIntervalRef.current = null;
     }
     setFetchProgress(100);
-    setFetchStep('Selesai!');
+    setFetchStep("Selesai!");
   };
 
   // Progress simulation for tax calculation
   const startCalcProgress = () => {
     setCalcProgress(0);
-    setCalcStep('Mengambil harga token...');
+    setCalcStep("Mengambil harga token...");
 
     let progress = 0;
     progressIntervalRef.current = setInterval(() => {
       progress += Math.random() * 6;
 
       if (progress < 40) {
-        setCalcStep('Mengambil harga token dari API...');
+        setCalcStep("Mengambil harga token dari API...");
       } else if (progress < 60) {
-        setCalcStep('Menghitung cost basis (FIFO)...');
+        setCalcStep("Menghitung cost basis (FIFO)...");
       } else if (progress < 80) {
-        setCalcStep('Menghitung keuntungan/kerugian...');
+        setCalcStep("Menghitung keuntungan/kerugian...");
       } else {
-        setCalcStep('Menghitung kewajiban pajak...');
+        setCalcStep("Menghitung kewajiban pajak...");
       }
 
       if (progress >= 90) {
@@ -133,11 +132,12 @@ export default function Home() {
       progressIntervalRef.current = null;
     }
     setCalcProgress(100);
-    setCalcStep('Selesai!');
+    setCalcStep("Selesai!");
   };
 
   // tRPC mutations and queries
-  const fetchTransactionsMutation = trpc.transactions.fetchTransactions.useMutation();
+  const fetchTransactionsMutation =
+    trpc.transactions.fetchTransactions.useMutation();
   const calculateTaxesMutation = trpc.transactions.calculateTaxes.useMutation();
   const transactionsQuery = trpc.transactions.getTransactions.useQuery(
     { walletAddress, year: selectedYear || 2024 },
@@ -190,7 +190,7 @@ export default function Home() {
       stopCalcProgress();
       setTaxSummary(result);
     } catch (error) {
-      console.error('Error calculating taxes:', error);
+      console.error("Error calculating taxes:", error);
       stopCalcProgress();
     } finally {
       setTimeout(() => {
@@ -204,10 +204,10 @@ export default function Home() {
 
     setIsDownloadingPdf(true);
     try {
-      const response = await fetch('/api/pdf', {
-        method: 'POST',
+      const response = await fetch("/api/pdf", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           walletAddress,
@@ -216,20 +216,23 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+        throw new Error("Failed to generate PDF");
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `taxana-report-${selectedYear}-${walletAddress.slice(0, 8)}.pdf`;
+      a.download = `taxana-report-${selectedYear}-${walletAddress.slice(
+        0,
+        8
+      )}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error("Error downloading PDF:", error);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -258,7 +261,9 @@ export default function Home() {
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <Calculator className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="text-lg font-semibold tracking-tight">Taxana</span>
+              <span className="text-lg font-semibold tracking-tight">
+                Taxana
+              </span>
             </div>
 
             <nav className="hidden md:flex items-center gap-8">
@@ -308,7 +313,7 @@ export default function Home() {
               {/* Subheadline */}
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in-up animation-delay-100">
                 Kalkulator pajak otomatis untuk trader Solana Indonesia.
-                Dukung semua DEX populer. Generate laporan PDF untuk SPT dalam hitungan detik.
+                Generate laporan PDF untuk SPT dalam hitungan detik.
               </p>
 
               {/* CTA Buttons */}
@@ -452,8 +457,12 @@ export default function Home() {
         {/* CSS animations */}
         <style jsx global>{`
           @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
           }
 
           @keyframes fade-in-up {
