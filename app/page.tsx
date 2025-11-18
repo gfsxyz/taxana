@@ -25,6 +25,13 @@ import {
   Twitter,
 } from "lucide-react";
 import type { TaxSummary } from "@/lib/services/tax-calculator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // Helper to format IDR
 function formatIDR(amount: number): string {
@@ -266,18 +273,6 @@ export default function Home() {
               </span>
             </div>
 
-            <nav className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Features
-              </a>
-              <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </a>
-              <a href="#docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Docs
-              </a>
-            </nav>
-
             <Button
               onClick={handleConnectWallet}
               variant="secondary"
@@ -305,9 +300,7 @@ export default function Home() {
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up">
                 Hitung Pajak Crypto
                 <br />
-                <span className="text-primary">
-                  Solana Anda
-                </span>
+                <span className="text-primary">Solana Anda</span>
               </h1>
 
               {/* Subheadline */}
@@ -326,15 +319,6 @@ export default function Home() {
                   <Wallet className="h-5 w-5 mr-2" />
                   Connect Phantom Wallet
                   <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="text-muted-foreground hover:text-foreground rounded-full px-6 h-12"
-                >
-                  Lihat Demo
-                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
 
@@ -367,7 +351,8 @@ export default function Home() {
                   </div>
                   <CardTitle className="text-lg">Tanpa Registrasi</CardTitle>
                   <CardDescription>
-                    Cukup hubungkan wallet Phantom Anda. Tidak perlu email, tidak perlu password. Data diproses secara aman.
+                    Cukup hubungkan wallet Phantom Anda. Tidak perlu email,
+                    tidak perlu password. Data diproses secara aman.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -380,7 +365,8 @@ export default function Home() {
                   </div>
                   <CardTitle className="text-lg">FIFO Cost Basis</CardTitle>
                   <CardDescription>
-                    Perhitungan keuntungan/kerugian menggunakan metode FIFO yang sesuai standar akuntansi.
+                    Perhitungan keuntungan/kerugian menggunakan metode FIFO yang
+                    sesuai standar akuntansi.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -393,7 +379,8 @@ export default function Home() {
                   </div>
                   <CardTitle className="text-lg">Laporan PDF</CardTitle>
                   <CardDescription>
-                    Generate laporan lengkap dengan detail transaksi. Siap untuk pelaporan SPT tahunan Anda.
+                    Generate laporan lengkap dengan detail transaksi. Siap untuk
+                    pelaporan SPT tahunan Anda.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -405,20 +392,34 @@ export default function Home() {
             <div className="max-w-3xl mx-auto">
               <Card>
                 <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">Tarif Pajak Crypto Indonesia</CardTitle>
-                  <CardDescription>Untuk transaksi melalui DEX (Unregistered Exchange)</CardDescription>
+                  <CardTitle className="text-2xl">
+                    Tarif Pajak Crypto Indonesia
+                  </CardTitle>
+                  <CardDescription>
+                    Untuk transaksi melalui DEX (Unregistered Exchange)
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div className="text-center p-6 rounded-xl bg-secondary">
-                      <div className="text-3xl font-bold text-primary mb-2">0.2%</div>
-                      <div className="text-sm text-muted-foreground">PPh Final</div>
-                      <div className="text-xs text-muted-foreground mt-1">Transaksi Jual</div>
+                      <div className="text-3xl font-bold text-primary mb-2">
+                        0.2%
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        PPh Final
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Transaksi Jual
+                      </div>
                     </div>
                     <div className="text-center p-6 rounded-xl bg-secondary">
-                      <div className="text-3xl font-bold text-primary mb-2">0.22%</div>
+                      <div className="text-3xl font-bold text-primary mb-2">
+                        0.22%
+                      </div>
                       <div className="text-sm text-muted-foreground">PPN</div>
-                      <div className="text-xs text-muted-foreground mt-1">Transaksi Beli</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Transaksi Beli
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -439,14 +440,21 @@ export default function Home() {
               </div>
 
               <p className="text-xs text-muted-foreground text-center">
-                Taxana adalah alat bantu perhitungan pajak. Selalu konsultasikan dengan konsultan pajak profesional.
+                Taxana adalah alat bantu perhitungan pajak. Selalu konsultasikan
+                dengan konsultan pajak profesional.
               </p>
 
               <div className="flex items-center gap-4">
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
                   <Twitter className="h-4 w-4" />
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a
+                  href="#"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
                   <Github className="h-4 w-4" />
                 </a>
               </div>
@@ -570,20 +578,27 @@ export default function Home() {
               <div className="h-16 w-16 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <Calculator className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Mengambil Transaksi</h2>
-              <p className="text-muted-foreground mb-6">Tahun pajak {selectedYear}</p>
+              <h2 className="text-xl font-semibold mb-2">
+                Mengambil Transaksi
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Tahun pajak {selectedYear}
+              </p>
             </div>
 
             <div className="space-y-3 max-w-md mx-auto">
               <Progress value={fetchProgress} className="h-2" />
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{fetchStep}</span>
-                <span className="font-medium text-primary">{Math.round(fetchProgress)}%</span>
+                <span className="font-medium text-primary">
+                  {Math.round(fetchProgress)}%
+                </span>
               </div>
             </div>
 
             <p className="text-xs text-muted-foreground mt-6">
-              Proses ini mungkin memakan waktu beberapa saat untuk wallet dengan banyak transaksi
+              Proses ini mungkin memakan waktu beberapa saat untuk wallet dengan
+              banyak transaksi
             </p>
           </div>
         ) : isCalculating ? (
@@ -603,7 +618,9 @@ export default function Home() {
               <Progress value={calcProgress} className="h-2" />
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{calcStep}</span>
-                <span className="font-medium text-primary">{Math.round(calcProgress)}%</span>
+                <span className="font-medium text-primary">
+                  {Math.round(calcProgress)}%
+                </span>
               </div>
             </div>
 
@@ -631,12 +648,14 @@ export default function Home() {
                 >
                   Ganti Tahun
                 </Button>
-                {!taxSummary && transactionsQuery.data && transactionsQuery.data.length > 0 && (
-                  <Button onClick={handleCalculateTaxes}>
-                    <Calculator className="h-4 w-4 mr-2" />
-                    Hitung Pajak
-                  </Button>
-                )}
+                {!taxSummary &&
+                  transactionsQuery.data &&
+                  transactionsQuery.data.length > 0 && (
+                    <Button onClick={handleCalculateTaxes}>
+                      <Calculator className="h-4 w-4 mr-2" />
+                      Hitung Pajak
+                    </Button>
+                  )}
               </div>
             </div>
 
@@ -647,11 +666,14 @@ export default function Home() {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardDescription>Total Transaksi</CardDescription>
-                      <CardTitle className="text-2xl">{taxSummary.totalTransactions}</CardTitle>
+                      <CardTitle className="text-2xl">
+                        {taxSummary.totalTransactions}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-xs text-muted-foreground">
-                        {taxSummary.totalBuys} beli, {taxSummary.totalSells} jual
+                        {taxSummary.totalBuys} beli, {taxSummary.totalSells}{" "}
+                        jual
                       </p>
                     </CardContent>
                   </Card>
@@ -659,7 +681,13 @@ export default function Home() {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardDescription>Keuntungan/Kerugian</CardDescription>
-                      <CardTitle className={`text-2xl ${taxSummary.netGainLossIdr >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                      <CardTitle
+                        className={`text-2xl ${
+                          taxSummary.netGainLossIdr >= 0
+                            ? "text-primary"
+                            : "text-destructive"
+                        }`}
+                      >
                         {taxSummary.netGainLossIdr >= 0 ? (
                           <TrendingUp className="inline h-5 w-5 mr-1" />
                         ) : (
@@ -669,27 +697,37 @@ export default function Home() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-muted-foreground">FIFO cost basis</p>
+                      <p className="text-xs text-muted-foreground">
+                        FIFO cost basis
+                      </p>
                     </CardContent>
                   </Card>
 
                   <Card>
                     <CardHeader className="pb-2">
                       <CardDescription>PPh Final (0.2%)</CardDescription>
-                      <CardTitle className="text-2xl">{formatIDR(taxSummary.totalPphTax)}</CardTitle>
+                      <CardTitle className="text-2xl">
+                        {formatIDR(taxSummary.totalPphTax)}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-muted-foreground">Pajak transaksi jual</p>
+                      <p className="text-xs text-muted-foreground">
+                        Pajak transaksi jual
+                      </p>
                     </CardContent>
                   </Card>
 
                   <Card>
                     <CardHeader className="pb-2">
                       <CardDescription>PPN (0.22%)</CardDescription>
-                      <CardTitle className="text-2xl">{formatIDR(taxSummary.totalPpnTax)}</CardTitle>
+                      <CardTitle className="text-2xl">
+                        {formatIDR(taxSummary.totalPpnTax)}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-muted-foreground">Pajak transaksi beli</p>
+                      <p className="text-xs text-muted-foreground">
+                        Pajak transaksi beli
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
@@ -724,8 +762,9 @@ export default function Home() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      Catatan: Perhitungan ini menggunakan harga token saat ini. Untuk akurasi lebih baik,
-                      gunakan harga historis pada saat transaksi dilakukan.
+                      Catatan: Perhitungan ini menggunakan harga token saat ini.
+                      Untuk akurasi lebih baik, gunakan harga historis pada saat
+                      transaksi dilakukan.
                     </p>
                   </CardContent>
                 </Card>
@@ -735,7 +774,9 @@ export default function Home() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardDescription>Total Transaksi</CardDescription>
-                    <CardTitle className="text-2xl">{transactionsQuery.data?.length || 0}</CardTitle>
+                    <CardTitle className="text-2xl">
+                      {transactionsQuery.data?.length || 0}
+                    </CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>
@@ -751,7 +792,11 @@ export default function Home() {
                     <CardDescription>DEX Terdeteksi</CardDescription>
                     <CardTitle className="text-2xl">
                       {transactionsQuery.data
-                        ? [...new Set(transactionsQuery.data.map(tx => tx.dex))].filter(Boolean).length
+                        ? [
+                            ...new Set(
+                              transactionsQuery.data.map((tx) => tx.dex)
+                            ),
+                          ].filter(Boolean).length
                         : 0}
                     </CardTitle>
                   </CardHeader>
