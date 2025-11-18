@@ -321,71 +321,79 @@ export function TaxReportPDF({
         />
       </Page>
 
-      {/* Transaction Details Page */}
-      {taxSummary.transactions.length > 0 && (
-        <Page size="A4" style={styles.page}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Detail Transaksi</Text>
+      {/* Transaction Details Pages - Show ALL transactions */}
+      {taxSummary.transactions.length > 0 &&
+        (() => {
+          const ROWS_PER_PAGE = 35;
+          const totalPages = Math.ceil(taxSummary.transactions.length / ROWS_PER_PAGE);
 
-            {/* Table Header */}
-            <View style={styles.tableHeader}>
-              <Text style={styles.colDate}>Tanggal</Text>
-              <Text style={styles.colType}>Tipe</Text>
-              <Text style={styles.colFrom}>Dari</Text>
-              <Text style={styles.colTo}>Ke</Text>
-              <Text style={styles.colValue}>Nilai (IDR)</Text>
-              <Text style={styles.colGainLoss}>P/L (IDR)</Text>
-              <Text style={styles.colTax}>Pajak</Text>
-            </View>
+          return Array.from({ length: totalPages }, (_, pageIndex) => {
+            const startIdx = pageIndex * ROWS_PER_PAGE;
+            const endIdx = Math.min(startIdx + ROWS_PER_PAGE, taxSummary.transactions.length);
+            const pageTransactions = taxSummary.transactions.slice(startIdx, endIdx);
 
-            {/* Table Rows */}
-            {taxSummary.transactions.slice(0, 30).map((tx, index) => (
-              <View
-                key={tx.signature}
-                style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}
-              >
-                <Text style={styles.colDate}>
-                  {formatDate(tx.timestamp)}
-                </Text>
-                <Text style={styles.colType}>
-                  {tx.type === 'buy' ? 'Beli' : 'Jual'}
-                </Text>
-                <Text style={styles.colFrom}>
-                  {tx.fromAmount.toFixed(2)} {tx.fromSymbol}
-                </Text>
-                <Text style={styles.colTo}>
-                  {tx.toAmount.toFixed(2)} {tx.toSymbol}
-                </Text>
-                <Text style={styles.colValue}>
-                  {formatIDR(tx.transactionValueIdr)}
-                </Text>
-                <Text style={styles.colGainLoss}>
-                  {tx.gainLossIdr !== 0
-                    ? (tx.gainLossIdr > 0 ? '+' : '') +
-                      formatIDR(tx.gainLossIdr)
-                    : '-'}
-                </Text>
-                <Text style={styles.colTax}>
-                  {formatIDR(tx.totalTax)}
-                </Text>
-              </View>
-            ))}
+            return (
+              <Page key={`tx-page-${pageIndex}`} size="A4" style={styles.page}>
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    Detail Transaksi {totalPages > 1 ? `(${startIdx + 1}-${endIdx} dari ${taxSummary.transactions.length})` : ''}
+                  </Text>
 
-            {taxSummary.transactions.length > 30 && (
-              <Text style={{ marginTop: 10, fontSize: 8, color: '#6b7280' }}>
-                ... dan {taxSummary.transactions.length - 30} transaksi lainnya
-              </Text>
-            )}
-          </View>
+                  {/* Table Header */}
+                  <View style={styles.tableHeader}>
+                    <Text style={styles.colDate}>Tanggal</Text>
+                    <Text style={styles.colType}>Tipe</Text>
+                    <Text style={styles.colFrom}>Dari</Text>
+                    <Text style={styles.colTo}>Ke</Text>
+                    <Text style={styles.colValue}>Nilai (IDR)</Text>
+                    <Text style={styles.colGainLoss}>P/L (IDR)</Text>
+                    <Text style={styles.colTax}>Pajak</Text>
+                  </View>
 
-          <Text
-            style={styles.pageNumber}
-            render={({ pageNumber, totalPages }) =>
-              `${pageNumber} / ${totalPages}`
-            }
-          />
-        </Page>
-      )}
+                  {/* Table Rows */}
+                  {pageTransactions.map((tx, index) => (
+                    <View
+                      key={tx.signature}
+                      style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}
+                    >
+                      <Text style={styles.colDate}>
+                        {formatDate(tx.timestamp)}
+                      </Text>
+                      <Text style={styles.colType}>
+                        {tx.type === 'buy' ? 'Beli' : 'Jual'}
+                      </Text>
+                      <Text style={styles.colFrom}>
+                        {tx.fromAmount.toFixed(2)} {tx.fromSymbol}
+                      </Text>
+                      <Text style={styles.colTo}>
+                        {tx.toAmount.toFixed(2)} {tx.toSymbol}
+                      </Text>
+                      <Text style={styles.colValue}>
+                        {formatIDR(tx.transactionValueIdr)}
+                      </Text>
+                      <Text style={styles.colGainLoss}>
+                        {tx.gainLossIdr !== 0
+                          ? (tx.gainLossIdr > 0 ? '+' : '') +
+                            formatIDR(tx.gainLossIdr)
+                          : '-'}
+                      </Text>
+                      <Text style={styles.colTax}>
+                        {formatIDR(tx.totalTax)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                <Text
+                  style={styles.pageNumber}
+                  render={({ pageNumber, totalPages }) =>
+                    `${pageNumber} / ${totalPages}`
+                  }
+                />
+              </Page>
+            );
+          });
+        })()}
     </Document>
   );
 }
