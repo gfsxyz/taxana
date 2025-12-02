@@ -243,12 +243,18 @@ export const transactionsRouter = router({
 
       // Store in database (upsert to avoid duplicates)
       if (parsedTransactions.length > 0) {
+        const failedInserts = [];
         for (const tx of parsedTransactions) {
           try {
             await db.insert(transactions).values(tx).onConflictDoNothing();
           } catch (error) {
             console.error('Error inserting transaction:', tx.signature, error);
+            failedInserts.push(tx.signature);
           }
+        }
+
+        if (failedInserts.length > 0) {
+          console.warn(`Failed to insert ${failedInserts.length} transactions. Database connection issue?`);
         }
       }
 
@@ -272,7 +278,21 @@ export const transactionsRouter = router({
       const endDate = new Date(year, 11, 31, 23, 59, 59);
 
       const result = await db
-        .select()
+        .select({
+          id: transactions.id,
+          walletAddress: transactions.walletAddress,
+          signature: transactions.signature,
+          timestamp: transactions.timestamp,
+          type: transactions.type,
+          fromToken: transactions.fromToken,
+          fromAmount: transactions.fromAmount,
+          fromSymbol: transactions.fromSymbol,
+          toToken: transactions.toToken,
+          toAmount: transactions.toAmount,
+          toSymbol: transactions.toSymbol,
+          dex: transactions.dex,
+          createdAt: transactions.createdAt,
+        })
         .from(transactions)
         .where(
           and(
