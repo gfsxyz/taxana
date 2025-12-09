@@ -27,8 +27,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import type { Transaction } from '@/lib/db/schema';
 
+type TransactionTableData = Omit<Transaction, 'rawData'>;
+
 interface TransactionTableProps {
-  transactions: Transaction[];
+  transactions: TransactionTableData[];
   isLoading: boolean;
 }
 
@@ -36,7 +38,7 @@ export function TransactionTable({ transactions, isLoading }: TransactionTablePr
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
 
-  const columns = useMemo<ColumnDef<Transaction>[]>(
+  const columns = useMemo<ColumnDef<TransactionTableData>[]>(
     () => [
       {
         accessorKey: 'timestamp',
