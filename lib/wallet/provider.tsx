@@ -6,8 +6,8 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 
-// Import wallet adapter styles
-import '@solana/wallet-adapter-react-ui/styles.css';
+// Note: We use a custom wallet modal, so we don't import the default styles
+// import '@solana/wallet-adapter-react-ui/styles.css';
 
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
   // Use mainnet for production

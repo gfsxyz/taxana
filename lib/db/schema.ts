@@ -45,6 +45,20 @@ export const reports = pgTable('reports', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Cache tracking for wallet data (1-hour TTL)
+export const walletCache = pgTable('wallet_cache', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  walletAddress: varchar('wallet_address', { length: 44 }).notNull(),
+  year: integer('year').notNull(),
+  fetchedAt: timestamp('fetched_at').notNull().defaultNow(),
+  transactionCount: integer('transaction_count'),
+}, (table) => [
+  index('idx_wallet_cache_lookup').on(table.walletAddress, table.year),
+]);
+
+export type WalletCache = typeof walletCache.$inferSelect;
+export type NewWalletCache = typeof walletCache.$inferInsert;
+
 // Types for TypeScript
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
