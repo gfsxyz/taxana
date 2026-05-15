@@ -1,8 +1,10 @@
 import { z } from 'zod/v4';
 import { router, publicProcedure } from '../trpc/trpc';
-import { db, transactions } from '@/lib/db';
+import { db, transactions, walletCache } from '@/lib/db';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { calculateTaxes as calculateTaxesService } from '@/lib/services/tax-calculator';
+
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 // Helius API types
 interface HeliusTransaction {
@@ -146,6 +148,43 @@ function parseSwapTransaction(tx: HeliusTransaction, walletAddress: string) {
 }
 
 export const transactionsRouter = router({
+  // Check if cached data exists and is fresh (< 1 hour old)
+  checkCache: publicProcedure
+    .input(z.object({
+      walletAddress: z.string().min(32).max(44),
+      year: z.number().min(2020).max(2030),
+    }))
+    .mutation(async ({ input }) => {
+      const { walletAddress, year } = input;
+
+      const cacheEntry = await db
+        .select()
+        .from(walletCache)
+        .where(
+          and(
+            eq(walletCache.walletAddress, walletAddress),
+            eq(walletCache.year, year)
+          )
+        )
+        .limit(1);
+
+      if (cacheEntry.length === 0) {
+        return { exists: false, valid: false, fetchedAt: null };
+      }
+
+      const entry = cacheEntry[0];
+      const ageMs = Date.now() - entry.fetchedAt.getTime();
+      const isValid = ageMs < ONE_HOUR_MS;
+
+      return {
+        exists: true,
+        valid: isValid,
+        fetchedAt: entry.fetchedAt.toISOString(),
+        transactionCount: entry.transactionCount,
+        ageMinutes: Math.floor(ageMs / (1000 * 60)),
+      };
+    }),
+
   // Fetch transactions from Helius and store in database
   fetchTransactions: publicProcedure
     .input(z.object({
@@ -256,6 +295,35 @@ export const transactionsRouter = router({
         if (failedInserts.length > 0) {
           console.warn(`Failed to insert ${failedInserts.length} transactions. Database connection issue?`);
         }
+      }
+
+      // Update cache tracking
+      const existingCache = await db
+        .select()
+        .from(walletCache)
+        .where(
+          and(
+            eq(walletCache.walletAddress, walletAddress),
+            eq(walletCache.year, year)
+          )
+        )
+        .limit(1);
+
+      if (existingCache.length > 0) {
+        await db
+          .update(walletCache)
+          .set({
+            fetchedAt: new Date(),
+            transactionCount: parsedTransactions.length,
+          })
+          .where(eq(walletCache.id, existingCache[0].id));
+      } else {
+        await db.insert(walletCache).values({
+          walletAddress,
+          year,
+          fetchedAt: new Date(),
+          transactionCount: parsedTransactions.length,
+        });
       }
 
       return {
